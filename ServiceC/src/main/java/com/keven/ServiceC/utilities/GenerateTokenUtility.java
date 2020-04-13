@@ -6,6 +6,8 @@
 package com.keven.ServiceC.utilities;
 
 import com.keven.ServiceC.models.Token;
+import java.util.ArrayList;
+import com.keven.ServiceC.models.Number;
 
 /**
  *
@@ -16,14 +18,14 @@ public class GenerateTokenUtility {
     
      public static Token generateToken(String sellerCode){
         
-        int[] numbers = new int[6];
+        java.util.List<Number> numbers = new ArrayList();
         
-        for(int num: numbers){
-            num = 1 + (int)(40*Math.random());
+        for(int i=0; i<6; i++){
+            int rand = 1 + (int)(40*Math.random());
+            numbers.add(new com.keven.ServiceC.models.Number(rand));
         }
         
       
        return new Token(sellerCode, numbers);
-    
     }
 }

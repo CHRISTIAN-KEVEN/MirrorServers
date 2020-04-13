@@ -6,9 +6,11 @@
 package com.keven.ServiceA.controllers;
 
 import com.keven.ServiceA.models.Token;
+import com.keven.ServiceA.repositories.TokenRepository;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import utilities.GenerateTokenUtility;
+//import com.keven.ServiceA.models.Number;
+import com.keven.ServiceA.repositories.NumberRepository;
+import java.util.ArrayList;
 
 /**
  *
@@ -24,27 +29,44 @@ import utilities.GenerateTokenUtility;
 @RestController
 public class TokenController {
     
+    @Autowired
+    TokenRepository tokenRepo;
+    
+    @Autowired
+    NumberRepository numberRepo;
+    
     RestTemplate rt = new RestTemplate();
     
     
     @RequestMapping(value="/tokens", method=RequestMethod.POST)
     public Token receiveToken(@RequestBody Token receivedToken){
         
-        Token token = Token.addToken(receivedToken);
-        if( token == null)
+       // Token token = Token.addToken(receivedToken);
+       Token newToken = tokenRepo.save(receivedToken); // Store in ServiceA db
+       
+        if( newToken == null)
             throw new RuntimeException("Failed to add Token !");
+        
+        for(com.keven.ServiceA.models.Number num: newToken.getNumbers()){
+            num.setToken(newToken);
+            numberRepo.save(num);
+        }
         
         System.out.println("Printed from server A: ");
         
-        List<Token> tokens = Token.getTokenBuffer();
+        List<Token> tokens = new java.util.ArrayList();
+        tokenRepo.findAll().forEach(tokens::add);
+      
+    // 
         for(Token t: tokens){
             System.out.println("Seller code: " + t.getSellerCode());
             System.out.println("Token numbers: " );
-            for(int i: t.getNumbers())
-                System.out.println(i+" ");
+            t.getNumbers().forEach((n) -> {
+                System.out.print(n.getValue() + " ");
+           });
             
         }
-        return token;    
+        return newToken;    
     }
     
     @RequestMapping(value="/generate-token/{sellerCode}")
@@ -53,12 +75,12 @@ public class TokenController {
         // Generate Token
         Token generatedToken = GenerateTokenUtility.generateToken(sellerCode);
         // Store in tokenBuffer
-        Token.addToken(generatedToken);
-        System.out.println(generatedToken.getSellerCode());
-        for(int k: generatedToken.getNumbers()){
-            System.out.print(" "+k);
+       // Token.addToken(generatedToken);
+       Token newToken = tokenRepo.save(generatedToken); // Storing token in the actual service's db
+       for(com.keven.ServiceA.models.Number num: newToken.getNumbers()){
+            num.setToken(newToken);
+            numberRepo.save(num);
         }
-        
         // Call other service (Service C) and pass the generated token to it
         Token t = null;
         try {
@@ -71,16 +93,18 @@ public class TokenController {
         
         System.out.println("Printed from server A: ");
         
-        List<Token> tokens = Token.getTokenBuffer();
+        List<Token> tokens = new ArrayList();
+        tokenRepo.findAll().forEach(tokens::add);
+        
+        // These printings are just to see the state of buffers
         for (Token tk : tokens) {
+            
             System.out.println("Seller code: " + tk.getSellerCode());
             System.out.println("Token numbers: ");
-            int[] numbs = tk.getNumbers();
-            for (int i =0; i<numbs.length; i++) {
-                System.out.print(numbs[i] + " ");
-            }
+            tk.getNumbers().forEach((i) -> System.out.print(i.getValue()));
 
         }
+        // End of printing
         return t;
     }
   

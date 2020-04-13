@@ -5,37 +5,39 @@
  */
 package com.keven.ServiceC.models;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  *
  * @author CHRISTIAN
  */
 @Entity
-public class Token implements Serializable{
+@Table(name="token")
+public class Token{
     
-    @Id
+   @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+       
+  //  private static List<Token> tokenBuffer = new ArrayList(); // This will serve as our persistence entity
     
-    
-    private static List<Token> tokenBuffer = new ArrayList(); // This will serve as our persistence entity
-    
-    
+    @Column(name = "seller_code")
     private String sellerCode;
-    private int[] numbers = new int[6];
     
-    public Token(String sellerCode, int[] nums){
-        this.sellerCode = sellerCode;
-        this.numbers = nums;
-    }
+    @OneToMany(mappedBy = "token")
+    private List<Number> numbers;
 
+    public Token(String sellerCode, List<Number> numbers){
+        this.sellerCode = sellerCode;
+        this.numbers = numbers;
+    }
     public Token(){} // Default constructor. For Deserialization
     
     public int getId() {
@@ -54,29 +56,12 @@ public class Token implements Serializable{
         this.sellerCode = sellerCode;
     }
 
-    public int[] getNumbers() {
+    public List<Number> getNumbers() {
         return numbers;
     }
 
-    public void setNumbers(int[] numbers) {
+    public void setNumbers(List<Number> numbers) {
         this.numbers = numbers;
-    }
-
-    public static List<Token> getTokenBuffer() {
-        return tokenBuffer;
-    }
-
-    public static void setTokenBuffer(List<Token> tokenBuffer) {
-        Token.tokenBuffer = tokenBuffer;
-    }
-    
-    
-    
-    public static Token addToken(Token receivedToken) {
-                
-        if( tokenBuffer.add(receivedToken) )
-            return receivedToken;
-        return null;
     }
     
 }
